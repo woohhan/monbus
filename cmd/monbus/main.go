@@ -2,10 +2,13 @@ package main
 
 import (
 	"flag"
+	"github.com/golang/glog"
 	"monbus/pkg/watcher"
 	"time"
+)
 
-	// "github.com/go-resty/resty/v2"
+const (
+	version = "v0.1.2"
 )
 
 func init() {
@@ -13,6 +16,7 @@ func init() {
 }
 
 func main() {
+	glog.Infof("Start monbus with version %s", version)
 	w, err := watcher.New()
 	if err != nil {
 		panic(err)

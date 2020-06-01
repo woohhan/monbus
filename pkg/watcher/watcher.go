@@ -8,14 +8,13 @@ import (
 )
 
 type station struct {
-	id                 int
-	Name               string
-	lastWatchTime      time.Time
-	isSetlastWatchTime bool // lastWatchTime가 셋업이 되어있는가? 최초에는 false이고 한 번이라도 셋되면 계속 true
+	id            int
+	Name          string
+	nextWatchTime *time.Time
 }
 
 type StationWatcher struct {
-	stations map[int]station
+	stations map[int]*station
 	storage  *storage.Storage
 }
 
@@ -25,7 +24,7 @@ func New() (*StationWatcher, error) {
 		return nil, err
 	}
 	return &StationWatcher{
-		stations: map[int]station{},
+		stations: map[int]*station{},
 		storage:  s,
 	}, nil
 }
@@ -36,10 +35,10 @@ func (s *StationWatcher) Close() error {
 
 // AddStation 는 감시할 정류장을 추가합니다
 func (s *StationWatcher) AddStation(id int, name string) {
-	s.stations[id] = station{
-		id:                 id,
-		Name:               name,
-		isSetlastWatchTime: false,
+	s.stations[id] = &station{
+		id:            id,
+		Name:          name,
+		nextWatchTime: nil,
 	}
 }
 
@@ -51,22 +50,14 @@ func (s *StationWatcher) Watch(watchInterval time.Duration, ignoreTime time.Dura
 			glog.Error(err)
 		}
 		glog.V(2).Infof("GetBusLocations result: %v", locs)
-
 		for _, loc := range locs {
 			station, found := s.stations[loc]
-			if !found {
+			// 기록할 대상이 아니거나 아직 nextWatchTime를 지나지 않았다면 기록하지 않는다
+			if !found || (station.nextWatchTime != nil && time.Now().Before(*station.nextWatchTime)) {
 				continue
 			}
-			glog.V(2).Infof("found station %v", loc)
-
-			if station.isSetlastWatchTime {
-				elapsed := time.Since(station.lastWatchTime)
-				if elapsed <= ignoreTime {
-					continue
-				}
-			}
-			station.isSetlastWatchTime = true
-			station.lastWatchTime = time.Now()
+			nextWatchTime := time.Now().Add(ignoreTime)
+			station.nextWatchTime = &nextWatchTime
 			s.storage.Write(station.id)
 		}
 		time.Sleep(watchInterval)
