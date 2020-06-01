@@ -28,10 +28,9 @@ func (s *Storage) Close() error {
 }
 
 // Write 는 stationId와 현재 시간을 테이블에 기록합니다
-func (s *Storage) Write(stationId int) error {
-	now := time.Now()
-	glog.V(2).Infof("Writed stationId(%v) dateTime(%v)", stationId, now)
-	res, err := s.db.Exec("INSERT INTO bustime (stationId, dateTime) value (?, ?)", stationId, now)
+func (s *Storage) Write(stationId int, nowTime time.Time) error {
+	glog.V(2).Infof("Writed stationId(%v) dateTime(%v)", stationId, nowTime)
+	res, err := s.db.Exec("INSERT INTO bustime (stationId, dateTime) value (?, ?)", stationId, nowTime)
 	if err != nil {
 		return err
 	}

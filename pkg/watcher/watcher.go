@@ -44,6 +44,10 @@ func (s *StationWatcher) AddStation(id int, name string) {
 
 // Watch 는 주어진 정류장을 watchInterval 주기마다 감시합니다. 만약 정류장을 찾으면 Storage에 기록하고 ignoreTime 동안은 무시합니다
 func (s *StationWatcher) Watch(watchInterval time.Duration, ignoreTime time.Duration) {
+	location, err := time.LoadLocation("Asia/Seoul")
+	if err != nil {
+		panic(err)
+	}
 	for {
 		locs, err := bus.GetBusLocations(bus.RouteIdFor8109)
 		if err != nil {
@@ -51,14 +55,15 @@ func (s *StationWatcher) Watch(watchInterval time.Duration, ignoreTime time.Dura
 		}
 		glog.V(2).Infof("GetBusLocations result: %v", locs)
 		for _, loc := range locs {
+			nowTime := time.Now().In(location)
 			station, found := s.stations[loc]
 			// 기록할 대상이 아니거나 아직 nextWatchTime를 지나지 않았다면 기록하지 않는다
-			if !found || (station.nextWatchTime != nil && time.Now().Before(*station.nextWatchTime)) {
+			if !found || (station.nextWatchTime != nil && nowTime.Before(*station.nextWatchTime)) {
 				continue
 			}
-			nextWatchTime := time.Now().Add(ignoreTime)
+			nextWatchTime := nowTime.Add(ignoreTime)
 			station.nextWatchTime = &nextWatchTime
-			s.storage.Write(station.id)
+			s.storage.Write(station.id, nowTime)
 		}
 		time.Sleep(watchInterval)
 	}
