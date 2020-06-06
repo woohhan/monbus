@@ -26,5 +26,5 @@ func main() {
 	}()
 	w.AddStation(4, "미금역")
 	w.AddStation(45, "주엽역(중)")
-	w.Watch(10*time.Second, 5*time.Minute)
+	w.Watch(10*time.Second, 30*time.Minute)
 }
