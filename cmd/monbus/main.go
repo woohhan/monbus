@@ -16,7 +16,7 @@ func init() {
 }
 
 func main() {
-	glog.Infof("Start monbus with version %s", version)
+	glog.Infof("Start monbus with version %s, time %v", version, time.Now())
 	w, err := watcher.New()
 	if err != nil {
 		panic(err)
