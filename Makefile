@@ -1,34 +1,20 @@
 .DEFAULT_GOAL := usage
 
-bb:
+test:
+	go run cmd/monbus/main.go -logtostderr=true
+
+run:
 	CGO_ENABLED=0 go build -o bin/monbus cmd/monbus/main.go
-
-rb:
-	make bb
-	./bin/monbus --logtostderr -v 2
-
-bi:
-	make bb
-	docker build -t quay.io/woohhan/monbus:canary .
-
-ri:
-	make bi
-	docker run quay.io/woohhan/monbus:canary
-
-pi:
-	make bi
-	docker tag quay.io/woohhan/monbus:canary quay.io/woohhan/monbus:latest
+	docker build -t quay.io/woohhan/monbus:latest .
 	docker push quay.io/woohhan/monbus:latest
+	docker rm --force monbus || true
+	docker run --name monbus -d --restart always -e "TZ=Asia/Seoul" quay.io/woohhan/monbus:latest
 
-c:
-	docker rmi --force quay.io/woohhan/monbus:canary
-	rm bin/monbus
+log:
+	docker logs monbus
 
 usage:
 	@echo "usage: make [command]"
-	@echo "bb     build binary"
-	@echo "rb     run binary"
-	@echo "bi     build image"
-	@echo "ri     run image"
-	@echo "pi     push image"
-	@echo "c      clean"
+	@echo "test"
+	@echo "run"
+	@echo "log"

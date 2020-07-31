@@ -14,7 +14,8 @@ type Storage struct {
 }
 
 func New() (*Storage, error) {
-	db, err := sql.Open("mysql", "admin:hRJEgsEbUy94QJmvfjtb@tcp(database-1.c4hts3jaq4u1.ap-northeast-2.rds.amazonaws.com:3306)/mon")
+	// db, err = gorm.Open("mysql", "root:@tcp(localhost:3306)/mydatabase?charset=utf8&parseTime=True&loc=Asia%2FSeoul")
+	db, err := sql.Open("mysql", "admin:hRJEgsEbUy94QJmvfjtb@tcp(database-1.c4hts3jaq4u1.ap-northeast-2.rds.amazonaws.com:3306)/mon?charset=utf8&parseTime=True&loc=Asia%2FSeoul")
 	if err != nil {
 		return nil, err
 	}
