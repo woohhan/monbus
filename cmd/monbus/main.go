@@ -5,6 +5,7 @@ import (
 	"github.com/golang/glog"
 	"monbus/pkg/busserver"
 	"monbus/pkg/buswatcher"
+	"monbus/pkg/storage"
 	"sync"
 	"time"
 )
@@ -17,10 +18,10 @@ func init() {
 	flag.Parse()
 }
 
-func busWatcher(wg *sync.WaitGroup) {
+func busWatcher(s *storage.Storage, wg *sync.WaitGroup) {
 	defer wg.Done()
 
-	w, err := buswatcher.New()
+	w, err := buswatcher.New(s)
 	if err != nil {
 		panic(err)
 	}
@@ -33,17 +34,25 @@ func busWatcher(wg *sync.WaitGroup) {
 	w.Watch(10*time.Second, 30*time.Minute)
 }
 
-func server(wg *sync.WaitGroup) {
+func server(s *storage.Storage, wg *sync.WaitGroup) {
 	defer wg.Done()
-	busserver.Test()
+	b := busserver.New(s)
+	b.Run()
 }
 
 func main() {
 	glog.Infof("Start monbus with version %s, time %v", version, time.Now())
 
+	// init storage
+	s, err := storage.New()
+	if err != nil {
+		panic(err)
+	}
+
+	// run watcher, server
 	var wg sync.WaitGroup
 	wg.Add(1)
-	go busWatcher(&wg)
-	go server(&wg)
+	go busWatcher(s, &wg)
+	go server(s, &wg)
 	wg.Wait()
 }

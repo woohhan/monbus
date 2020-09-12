@@ -3,7 +3,7 @@ package buswatcher
 import (
 	"github.com/golang/glog"
 	"monbus/pkg/buswatcher/bus"
-	"monbus/pkg/buswatcher/storage"
+	"monbus/pkg/storage"
 	"time"
 )
 
@@ -18,11 +18,7 @@ type StationWatcher struct {
 	storage  *storage.Storage
 }
 
-func New() (*StationWatcher, error) {
-	s, err := storage.New()
-	if err != nil {
-		return nil, err
-	}
+func New(s *storage.Storage) (*StationWatcher, error) {
 	return &StationWatcher{
 		stations: map[int]*station{},
 		storage:  s,

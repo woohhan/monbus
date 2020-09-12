@@ -2,73 +2,45 @@ package busserver
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/golang/glog"
-	"io/ioutil"
+	"github.com/gorilla/mux"
 	"log"
+	"monbus/pkg/storage"
 	"net/http"
 )
 
-type SkillRequest struct {
-	Action SkillBodyAction `json:"action"`
+type BusServer struct {
+	storage *storage.Storage
 }
 
-type SkillBodyAction struct {
-	Name         string       `json:"name"`
-	DetailParams DetailParams `json:"detailParams"`
+func New(s *storage.Storage) *BusServer {
+	return &BusServer{
+		storage: s,
+	}
 }
 
-type DetailParams struct {
-	IsWeekend isWeekend `json:"IsWeekend"`
+func (b *BusServer) Run() {
+	r := mux.NewRouter()
+	r.HandleFunc("/bustime/{id}", b.busTimeHandler)
+	log.Fatal(http.ListenAndServe(":8080", r))
 }
 
-type isWeekend struct {
-	Value bool `json:"value"`
-}
-
-type SkillResponse struct {
-	Version  string   `json:"version"`
-	Template Template `json:"template"`
-}
-
-type Template struct {
-	Outputs []SkillOutput `json:"outputs"`
-}
-
-type SkillOutput struct {
-	SimpleText SimpleText `json:"simpleText"`
-}
-
-type SimpleText struct {
-	Text string `json:"text"`
-}
-
-func Test() {
-	http.HandleFunc("/", func(writer http.ResponseWriter, request *http.Request) {
-		writer.Write([]byte("hi"))
-	})
-	http.HandleFunc("/bustime", busTimeHandler)
-	log.Fatal(http.ListenAndServe(":8080", nil))
-}
-
-func busTimeHandler(w http.ResponseWriter, r *http.Request) {
+func (b *BusServer) busTimeHandler(w http.ResponseWriter, r *http.Request) {
 	glog.Infof("start busTimeHandler with %v", r)
-
 	if r.Method != "POST" {
 		http.Error(w, "invalid request method", http.StatusMethodNotAllowed)
+		return
 	}
 
-	// read body
-	body, err := ioutil.ReadAll(r.Body)
+	// get stationId
+	id := mux.Vars(r)["id"]
+
+	// get result from db
+	res, err := b.storage.GetBusTime(id)
 	if err != nil {
-		http.Error(w, "Error reading request body", http.StatusInternalServerError)
+		http.Error(w, "get bustime from db error", http.StatusInternalServerError)
+		return
 	}
-	glog.Infof("--- body ---\n%s\n------------", body)
-
-	// parse body
-	sbody := &SkillRequest{}
-	json.Unmarshal(body, &sbody)
-	fmt.Printf("sbody\n%v", sbody)
 
 	resp := &SkillResponse{
 		Version: "2.0",
@@ -76,15 +48,14 @@ func busTimeHandler(w http.ResponseWriter, r *http.Request) {
 			Outputs: []SkillOutput{
 				{
 					SimpleText: SimpleText{
-						Text: "간단한 내용",
+						Text: res,
 					},
 				},
 			},
 		},
 	}
+	glog.Infof("result is %s", resp)
 
 	j, _ := json.Marshal(resp)
-	fmt.Println(string(j))
-
 	w.Write(j)
 }

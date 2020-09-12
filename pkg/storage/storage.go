@@ -6,6 +6,7 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/golang/glog"
 	"reflect"
+	"strings"
 	"time"
 )
 
@@ -50,4 +51,23 @@ func (s *Storage) Write(stationId int, nowTime time.Time) error {
 		return errors.New("write affected is not 1")
 	}
 	return nil
+}
+
+// GetBusTime 은 오늘의 버스 시간을 얻어옵니다
+func (s *Storage) GetBusTime(stationId string) (string, error) {
+	rows, err := s.db.Query("select dateTime from bustime where DATE(datetime) = CURDATE() AND stationId = ? order by datetime", stationId)
+	if err != nil {
+		return "", err
+	}
+	defer rows.Close()
+
+	result := make([]string, 0)
+	for rows.Next() {
+		var t time.Time
+		if err := rows.Scan(&t); err != nil {
+			return "", err
+		}
+		result = append(result, t.Format(time.Kitchen))
+	}
+	return strings.Join(result, "\n"), nil
 }
