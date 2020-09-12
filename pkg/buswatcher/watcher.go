@@ -1,9 +1,9 @@
-package watcher
+package buswatcher
 
 import (
 	"github.com/golang/glog"
-	"monbus/pkg/bus"
-	"monbus/pkg/storage"
+	"monbus/pkg/buswatcher/bus"
+	"monbus/pkg/buswatcher/storage"
 	"time"
 )
 

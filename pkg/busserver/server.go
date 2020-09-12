@@ -1,4 +1,4 @@
-package server
+package busserver
 
 import (
 	"encoding/json"
@@ -48,7 +48,7 @@ func Test() {
 		writer.Write([]byte("hi"))
 	})
 	http.HandleFunc("/bustime", busTimeHandler)
-	log.Fatal(http.ListenAndServe(":80", nil))
+	log.Fatal(http.ListenAndServe(":8080", nil))
 }
 
 func busTimeHandler(w http.ResponseWriter, r *http.Request) {

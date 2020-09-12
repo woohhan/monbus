@@ -5,6 +5,7 @@ import (
 	"errors"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/golang/glog"
+	"reflect"
 	"time"
 )
 
@@ -14,14 +15,21 @@ type Storage struct {
 }
 
 func New() (*Storage, error) {
-	// db, err = gorm.Open("mysql", "root:@tcp(localhost:3306)/mydatabase?charset=utf8&parseTime=True&loc=Asia%2FSeoul")
-	db, err := sql.Open("mysql", "admin:hRJEgsEbUy94QJmvfjtb@tcp(database-1.c4hts3jaq4u1.ap-northeast-2.rds.amazonaws.com:3306)/mon?charset=utf8&parseTime=True&loc=Asia%2FSeoul")
+	db, err := sql.Open("mysql", "root:1234@tcp(localhost:3306)/mysql?charset=utf8&parseTime=True&loc=Asia%2FSeoul")
 	if err != nil {
 		return nil, err
 	}
-	return &Storage{
-		db,
-	}, nil
+	if err := testDbConnection(db); err != nil {
+		if !reflect.DeepEqual(err, sql.ErrNoRows) {
+			return nil, err
+		}
+	}
+	return &Storage{db: db}, nil
+}
+
+func testDbConnection(db *sql.DB) error {
+	var id int
+	return db.QueryRow("select id from bustime").Scan(&id)
 }
 
 func (s *Storage) Close() error {

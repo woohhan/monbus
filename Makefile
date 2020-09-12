@@ -1,7 +1,7 @@
 .DEFAULT_GOAL := usage
 
 test:
-	go run cmd/monbus/main.go -logtostderr=true
+	go run cmd/monbus/main.go -logtostderr=true -v 2
 
 run:
 	CGO_ENABLED=0 go build -o bin/monbus cmd/monbus/main.go
